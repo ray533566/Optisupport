@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OptiSupport — Optical Transceiver AI Assistant</title>
+<meta name="description" content="AI-powered support portal for optical transceiver modules. Expert assistance for QSFP-DD, QSFP28, SFP28, CMIS 5.2, FEC, DOM, and link budget calculations.">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #0a0c11;
+  --bg2:     #111318;
+  --bg3:     #181b24;
+  --bg4:     #1e2230;
+  --border:  #252a3a;
+  --border2: #2e354a;
+  --text:    #e2e6f0;
+  --text2:   #c0c8de;
+  --text3:   #8892b0;
+  --accent:  #4f8ef7;
+  --accent2: #6dd4a8;
+  --amber:   #f0a832;
+  --coral:   #e8624a;
+  --purple:  #a87ef5;
+  --green:   #52c77e;
+  --mono:    'IBM Plex Mono', monospace;
+  --sans:    'IBM Plex Sans', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); font-family: var(--sans); color: var(--text); }
+
+/* ── NAV ── */
+.nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 54px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.nav::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--purple) 50%, var(--accent2) 100%);
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: #fff; font-family: var(--mono);
+}
+.logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+.logo-badge {
+  font-size: 10px; font-family: var(--mono); color: var(--accent);
+  background: rgba(79,142,247,0.12); border: 1px solid rgba(79,142,247,0.25);
+  border-radius: 4px; padding: 1px 6px;
+}
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab {
+  font-size: 13px; color: var(--text3); padding: 6px 14px; border-radius: 6px;
+  cursor: pointer; border: none; background: transparent;
+  font-family: var(--sans); transition: all 0.15s;
+}
+.nav-tab:hover { color: var(--text2); background: var(--bg3); }
+.nav-tab.active { color: var(--accent); background: rgba(79,142,247,0.1); }
+.nav-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* ── MAIN LAYOUT ── */
+.site { display: flex; flex-direction: column; height: 100vh; }
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 230px; flex-shrink: 0;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 16px 0; overflow-y: auto;
+}
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.sidebar-section { padding: 0 12px 8px; }
+.sidebar-label {
+  font-size: 10px; font-family: var(--mono); color: var(--text3);
+  text-transform: uppercase; letter-spacing: 1px; padding: 0 4px 6px;
+}
+.topic-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 8px 10px; border-radius: 6px; border: none; background: transparent;
+  color: var(--text2); font-size: 13px; font-family: var(--sans);
+  cursor: pointer; text-align: left; transition: all 0.15s;
+}
+.topic-btn:hover { background: var(--bg3); color: var(--text); }
+.topic-btn.active { background: rgba(79,142,247,0.12); color: var(--accent); }
+.topic-icon {
+  width: 24px; height: 24px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.divider { height: 1px; background: var(--border); margin: 8px 12px; }
+
+/* ── CHAT AREA ── */
+.chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+.hero {
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  padding: 14px 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.hero-left h2 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.hero-left p { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+.spec-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { font-size: 11px; font-family: var(--mono); padding: 3px 8px; border-radius: 4px; border: 1px solid; }
+.chip-blue   { color: var(--accent);  border-color: rgba(79,142,247,0.3);  background: rgba(79,142,247,0.07); }
+.chip-green  { color: var(--accent2); border-color: rgba(109,212,168,0.3); background: rgba(109,212,168,0.07); }
+.chip-purple { color: var(--purple);  border-color: rgba(168,126,245,0.3); background: rgba(168,126,245,0.07); }
+.chip-amber  { color: var(--amber);   border-color: rgba(240,168,50,0.3);  background: rgba(240,168,50,0.07); }
+
+/* ── MESSAGES ── */
+.messages {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.msg { display: flex; gap: 10px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg.user { flex-direction: row-reverse; }
+
+.avatar {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+}
+.avatar-ai   { background: linear-gradient(135deg,var(--accent),var(--purple)); color: #fff; }
+.avatar-user { background: var(--bg4); color: var(--text3); }
+
+.bubble {
+  max-width: 72%; padding: 10px 14px; border-radius: 12px;
+  font-size: 13.5px; line-height: 1.65;
+}
+.bubble-ai   { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); border-radius: 12px 12px 12px 2px; }
+.bubble-user { background: rgba(79,142,247,0.15); color: var(--text); border: 1px solid rgba(79,142,247,0.25); border-radius: 12px 12px 2px 12px; }
+.bubble code { font-family: var(--mono); font-size: 12px; background: var(--bg4); color: var(--accent2); padding: 1px 5px; border-radius: 3px; }
+.bubble strong { color: var(--text); font-weight: 600; }
+.bubble ul { padding-left: 18px; margin-top: 6px; }
+.bubble li { margin-bottom: 3px; }
+
+.quick-replies { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.qr-btn {
+  font-size: 12px; font-family: var(--sans); color: var(--accent);
+  padding: 5px 12px; border: 1px solid rgba(79,142,247,0.3);
+  border-radius: 20px; background: rgba(79,142,247,0.06);
+  cursor: pointer; transition: all 0.15s;
+}
+.qr-btn:hover { background: rgba(79,142,247,0.18); border-color: rgba(79,142,247,0.55); }
+
+/* ── TYPING ── */
+.typing {
+  display: flex; align-items: center; gap: 4px;
+  padding: 10px 14px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 12px 12px 12px 2px;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
+.dot:nth-child(2){animation-delay:0.2s}
+.dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+
+/* ── INPUT BAR ── */
+.input-bar {
+  padding: 14px 24px 16px; background: var(--bg2);
+  border-top: 1px solid var(--border); flex-shrink: 0;
+}
+.input-row { display: flex; gap: 8px; align-items: flex-end; }
+.input-box {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 14px;
+  color: var(--text); font-family: var(--sans); font-size: 13.5px;
+  resize: none; outline: none; transition: border-color 0.2s;
+  line-height: 1.5; min-height: 42px; max-height: 120px;
+}
+.input-box::placeholder { color: var(--text3); }
+.input-box:focus { border-color: var(--accent); }
+.send-btn {
+  width: 42px; height: 42px; border-radius: 10px; border: none;
+  background: var(--accent); color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all 0.15s; flex-shrink: 0;
+}
+.send-btn:hover { background: #6a9ff8; transform: scale(1.04); }
+.send-btn:disabled { background: var(--bg4); color: var(--text3); cursor: not-allowed; transform: none; }
+.input-hint { font-size: 11px; color: var(--text3); margin-top: 6px; font-family: var(--mono); }
+
+/* ── INFO PANEL ── */
+.info-panel {
+  width: 200px; flex-shrink: 0;
+  background: var(--bg2); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow-y: auto; padding: 14px 12px;
+}
+.info-panel::-webkit-scrollbar { width: 3px; }
+.info-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+.info-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.info-card-title { font-size: 10px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+.info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.info-key { font-size: 11px; color: var(--text3); }
+.info-val { font-size: 11px; font-family: var(--mono); color: var(--accent2); font-weight: 500; }
+.info-val.amber  { color: var(--amber); }
+.info-val.coral  { color: var(--coral); }
+.info-val.purple { color: var(--purple); }
+.info-val.blue   { color: var(--accent); }
+.progress-bar  { height: 3px; background: var(--border); border-radius: 2px; margin-top: 6px; }
+.progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+
+/* ── API KEY MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 28px; width: 480px; max-width: 92vw;
+  position: relative;
+}
+.modal::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--purple), var(--accent2));
+  border-radius: 14px 14px 0 0;
+}
+.modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.modal p  { font-size: 13px; color: var(--text3); margin-bottom: 18px; line-height: 1.6; }
+.modal input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 10px 14px; color: var(--text);
+  font-family: var(--mono); font-size: 13px; outline: none;
+  transition: border-color 0.2s; margin-bottom: 12px;
+}
+.modal input:focus { border-color: var(--accent); }
+.modal-btn {
+  width: 100%; padding: 11px; border-radius: 8px; border: none;
+  background: var(--accent); color: #fff; font-size: 14px; font-weight: 500;
+  font-family: var(--sans); cursor: pointer; transition: background 0.15s;
+}
+.modal-btn:hover { background: #6a9ff8; }
+.modal-note { font-size: 11px; color: var(--text3); margin-top: 10px; font-family: var(--mono); text-align: center; }
+.modal-note a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <h3>⬡ OptiSupport — API Key Required</h3>
+    <p>This AI assistant is powered by the Anthropic Claude API. Enter your API key to activate the assistant. Your key is stored only in your browser session and never sent to any server other than Anthropic.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" />
+    <button class="modal-btn" onclick="saveApiKey()">Activate Assistant</button>
+    <div class="modal-note">Get your API key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
+  </div>
+</div>
+
+<!-- MAIN SITE -->
+<div class="site">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="logo-icon">⬡</div>
+      <span class="logo-text">OptiSupport</span>
+      <span class="logo-badge">AI-Powered</span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active">Support Chat</button>
+      <button class="nav-tab">Spec Finder</button>
+      <button class="nav-tab">Troubleshoot</button>
+      <button class="nav-tab">Documents</button>
+    </div>
+    <div class="nav-status">
+      <div class="status-dot"></div>
+      AI Online
+    </div>
+  </nav>
+
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Product Lines</div>
+        <button class="topic-btn active" onclick="sendTopic('QSFP-DD 400G modules — specifications and applications')">
+          <div class="topic-icon" style="background:rgba(79,142,247,0.15)">📡</div> QSFP-DD 400G
+        </button>
+        <button class="topic-btn" onclick="sendTopic('QSFP28 100G module specifications and reach variants')">
+          <div class="topic-icon" style="background:rgba(109,212,168,0.15)">💠</div> QSFP28 100G
+        </button>
+        <button class="topic-btn" onclick="sendTopic('SFP28 25G module specifications')">
+          <div class="topic-icon" style="background:rgba(168,126,245,0.15)">🔷</div> SFP28 25G
+        </button>
+        <button class="topic-btn" onclick="sendTopic('OSFP 800G module specifications and applications')">
+          <div class="topic-icon" style="background:rgba(82,199,126,0.15)">🔶</div> OSFP 800G
+        </button>
+        <button class="topic-btn" onclick="sendTopic('CFP2 coherent optical module specifications')">
+          <div class="topic-icon" style="background:rgba(240,168,50,0.15)">🌐</div> CFP2 Coherent
+        </button>
+      </div>
+      <div class="divider"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Technical Topics</div>
+        <button class="topic-btn" onclick="sendTopic('optical power budget and link loss calculation guide')">
+          <div class="topic-icon" style="background:rgba(82,199,126,0.15)">⚡</div> Power Budget
+        </button>
+        <button class="topic-btn" onclick="sendTopic('CMIS 5.2 protocol register map and state machines')">
+          <div class="topic-icon" style="background:rgba(79,142,247,0.15)">📋</div> CMIS 5.2
+        </button>
+        <button class="topic-btn" onclick="sendTopic('FEC modes RS-FEC KP4 and BER performance thresholds')">
+          <div class="topic-icon" style="background:rgba(232,98,74,0.15)">🔧</div> FEC / BER
+        </button>
+        <button class="topic-btn" onclick="sendTopic('DOM DDM monitoring alarms and threshold values')">
+          <div class="topic-icon" style="background:rgba(168,126,245,0.15)">📊</div> DOM / DDM
+        </button>
+        <button class="topic-btn" onclick="sendTopic('MSA compliance standards SFF IEEE 802.3')">
+          <div class="topic-icon" style="background:rgba(109,212,168,0.15)">✅</div> MSA Standards
+        </button>
+        <button class="topic-btn" onclick="sendTopic('DWDM wavelength grid ITU-T C-band channels')">
+          <div class="topic-icon" style="background:rgba(240,168,50,0.15)">🌈</div> DWDM / WDM
+        </button>
+      </div>
+      <div class="divider"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Troubleshooting</div>
+        <button class="topic-btn" onclick="sendTopic('optical module not detected by host system troubleshooting steps')">
+          <div class="topic-icon" style="background:rgba(232,98,74,0.15)">❗</div> Not Detected
+        </button>
+        <button class="topic-btn" onclick="sendTopic('high BER signal quality degradation causes and fixes')">
+          <div class="topic-icon" style="background:rgba(240,168,50,0.15)">📉</div> High BER
+        </button>
+        <button class="topic-btn" onclick="sendTopic('module overheating thermal management and derating')">
+          <div class="topic-icon" style="background:rgba(232,98,74,0.15)">🌡️</div> Thermal Issues
+        </button>
+        <button class="topic-btn" onclick="sendTopic('TX RX power alarm low high threshold exceeded')">
+          <div class="topic-icon" style="background:rgba(168,126,245,0.15)">🔴</div> Power Alarms
+        </button>
+      </div>
+    </div>
+
+    <!-- CHAT AREA -->
+    <div class="chat-area">
+      <div class="hero">
+        <div class="hero-left">
+          <h2>Optical Transceiver AI Assistant</h2>
+          <p>Expert support · 100G · 400G · 800G · Coherent · CMIS 5.2 · DWDM · DOM</p>
+        </div>
+        <div class="spec-chips">
+          <span class="chip chip-blue">IEEE 802.3</span>
+          <span class="chip chip-green">CMIS 5.2</span>
+          <span class="chip chip-purple">SFF-8024</span>
+          <span class="chip chip-amber">SFF-8472</span>
+        </div>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="msg">
+          <div class="avatar avatar-ai">AI</div>
+          <div>
+            <div class="bubble bubble-ai">
+              Welcome to <strong>OptiSupport</strong> — your AI assistant for optical transceiver technology.<br><br>
+              I can help with <strong>product specifications</strong>, <strong>link budget calculations</strong>, <strong>CMIS 5.2 register maps</strong>, <strong>FEC configuration</strong>, <strong>DOM diagnostics</strong>, and <strong>troubleshooting</strong>.<br><br>
+              Select a topic from the sidebar, or type your question below.
+            </div>
+            <div class="quick-replies">
+              <button class="qr-btn" onclick="quickAsk('What is the TX power range for QSFP-DD 400G-LR4?')">QSFP-DD 400G specs</button>
+              <button class="qr-btn" onclick="quickAsk('How do I calculate optical link budget for a 10km single-mode fiber?')">Link budget calc</button>
+              <button class="qr-btn" onclick="quickAsk('Explain the CMIS 5.2 module state machine and its transitions')">CMIS 5.2 MSM</button>
+              <button class="qr-btn" onclick="quickAsk('What causes high BER in 100G SR4 and how to fix it?')">High BER causes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-bar">
+        <div class="input-row">
+          <textarea class="input-box" id="userInput"
+            placeholder="Ask about transceivers, specifications, CMIS registers, link budgets, troubleshooting…"
+            rows="1"
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" title="Send message">&#9658;</button>
+        </div>
+        <div class="input-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line &nbsp;·&nbsp; Select a topic from sidebar for quick start</div>
+      </div>
+    </div>
+
+    <!-- INFO PANEL -->
+    <div class="info-panel">
+      <div class="info-card">
+        <div class="info-card-title">Session</div>
+        <div class="info-row"><span class="info-key">Messages</span><span class="info-val" id="msgCount">1</span></div>
+        <div class="info-row"><span class="info-key">Model</span><span class="info-val">Sonnet 4</span></div>
+        <div class="info-row"><span class="info-key">Status</span><span class="info-val" id="statusVal">Ready</span></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Form Factors</div>
+        <div class="info-row"><span class="info-key">QSFP-DD</span><span class="info-val">8×50G</span></div>
+        <div class="info-row"><span class="info-key">OSFP</span><span class="info-val">8×100G</span></div>
+        <div class="info-row"><span class="info-key">QSFP28</span><span class="info-val">4×25G</span></div>
+        <div class="info-row"><span class="info-key">SFP28</span><span class="info-val">1×25G</span></div>
+        <div class="info-row"><span class="info-key">CFP2</span><span class="info-val blue">Coherent</span></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Reach Guide</div>
+        <div class="info-row"><span class="info-key">SR / SR4</span><span class="info-val">100m</span></div>
+        <div class="info-row"><span class="info-key">LR / LR4</span><span class="info-val">10km</span></div>
+        <div class="info-row"><span class="info-key">ER</span><span class="info-val amber">40km</span></div>
+        <div class="info-row"><span class="info-key">ZR</span><span class="info-val amber">80km</span></div>
+        <div class="info-row"><span class="info-key">ZR+</span><span class="info-val coral">1000km</span></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Wavelengths</div>
+        <div class="info-row"><span class="info-key">850 nm</span><span class="info-val">SR/SR4 MM</span></div>
+        <div class="info-row"><span class="info-key">1310 nm</span><span class="info-val">LR/LR4 SM</span></div>
+        <div class="info-row"><span class="info-key">1550 nm</span><span class="info-val">ER/ZR SM</span></div>
+        <div class="info-row"><span class="info-key">C-Band</span><span class="info-val purple">DWDM</span></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">DOM Thresholds</div>
+        <div class="info-row"><span class="info-key">Temp Warn</span><span class="info-val amber">70 °C</span></div>
+        <div class="info-row"><span class="info-key">Temp Alarm</span><span class="info-val coral">80 °C</span></div>
+        <div class="info-row"><span class="info-key">Vcc Warn</span><span class="info-val amber">3.45 V</span></div>
+        <div class="info-row"><span class="info-key">Bias Alarm</span><span class="info-val coral">100 mA</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:62%"></div></div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Key Standards</div>
+        <div class="info-row"><span class="info-key">Ethernet</span><span class="info-val">IEEE 802.3</span></div>
+        <div class="info-row"><span class="info-key">Mgmt</span><span class="info-val">CMIS 5.2</span></div>
+        <div class="info-row"><span class="info-key">SFP DOM</span><span class="info-val">SFF-8472</span></div>
+        <div class="info-row"><span class="info-key">QSFP</span><span class="info-val">SFF-8636</span></div>
+        <div class="info-row"><span class="info-key">FEC</span><span class="info-val">RS(544,514)</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are an expert optical transceiver support engineer at OptiSupport with deep knowledge of:
+- Optical transceiver modules: QSFP-DD, QSFP28, SFP28, SFP+, CFP2, OSFP, QSFP-DD8
+- Standards: IEEE 802.3, CMIS 5.2, SFF-8024, SFF-8636, SFF-8472, OIF, ITU-T
+- Technologies: 100G, 400G, 800G, coherent, DWDM, WDM, PAM4, NRZ, DP-QPSK
+- Link budgets: optical power, insertion loss, dispersion, penalty analysis
+- DOM/DDM: monitoring registers, alarm/warning thresholds, real-time diagnostics
+- FEC: RS-FEC RS(544,514), KR4-FEC, KP4-FEC, OFEC, pre/post-FEC BER
+- CMIS 5.2: module state machine (MSM), data path state machine (DPSM), CDB commands, VDM diagnostics, register maps
+- Troubleshooting: high BER, no signal, module not recognized, thermal derating, TX/RX power alarms
+- Applications: data center interconnect, telecom backbone, enterprise campus, HPC
+
+Guidelines:
+- Be concise, technical, and precise
+- Use specific values, register addresses, dBm levels, and standards references
+- When helpful, structure answers with clear sections
+- For calculations, show the formula and steps
+- Always recommend safe operating ranges`;
+
+let conversationHistory = [];
+let messageCount = 1;
+let apiKey = '';
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant')) {
+    alert('Please enter a valid Anthropic API key starting with sk-ant');
+    return;
+  }
+  apiKey = key;
+  document.getElementById('apiModal').style.display = 'none';
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function quickAsk(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+}
+
+function sendTopic(text) {
+  document.getElementById('userInput').value = text;
+  sendMessage();
+  document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+function appendMsg(role, html, quickReplies) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg' + (role === 'user' ? ' user' : '');
+  const initials = role === 'user' ? 'YOU' : 'AI';
+  const avatarClass = role === 'user' ? 'avatar-user' : 'avatar-ai';
+  const bubbleClass = role === 'user' ? 'bubble-user' : 'bubble-ai';
+  let qrHtml = '';
+  if (quickReplies && quickReplies.length) {
+    qrHtml = '<div class="quick-replies">' +
+      quickReplies.map(q => `<button class="qr-btn" onclick="quickAsk(${JSON.stringify(q)})">${q}</button>`).join('') +
+      '</div>';
+  }
+  div.innerHTML = `
+    <div class="avatar ${avatarClass}">${initials}</div>
+    <div style="min-width:0;flex:1">
+      <div class="bubble ${bubbleClass}">${html}</div>
+      ${qrHtml}
+    </div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="avatar avatar-ai">AI</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+function formatResponse(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function setStatus(s) {
+  document.getElementById('statusVal').textContent = s;
+}
+
+async function sendMessage() {
+  if (!apiKey) {
+    document.getElementById('apiModal').style.display = 'flex';
+    return;
+  }
+  const input = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = ''; input.style.height = 'auto';
+  sendBtn.disabled = true;
+  setStatus('Thinking…');
+
+  appendMsg('user', text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+  conversationHistory.push({ role: 'user', content: text });
+  messageCount++;
+  document.getElementById('msgCount').textContent = messageCount;
+
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: conversationHistory
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API error ' + res.status);
+    }
+
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Sorry, I could not get a response.';
+    conversationHistory.push({ role: 'assistant', content: reply });
+    messageCount++;
+    document.getElementById('msgCount').textContent = messageCount;
+    removeTyping();
+    setStatus('Ready');
+
+    const lower = text.toLowerCase();
+    let qr = [];
+    if (lower.includes('qsfp-dd') || lower.includes('400g'))
+      qr = ['What is the LR4 reach and power spec?', 'Show DOM threshold registers', 'PAM4 vs NRZ comparison'];
+    else if (lower.includes('cmis') || lower.includes('register') || lower.includes('state machine'))
+      qr = ['CDB command sequence', 'Data path activation steps', 'VDM diagnostics registers'];
+    else if (lower.includes('ber') || lower.includes('fec'))
+      qr = ['How to enable RS-FEC?', 'Pre-FEC vs post-FEC BER thresholds', 'KP4 FEC overhead calculation'];
+    else if (lower.includes('link') || lower.includes('budget') || lower.includes('power'))
+      qr = ['Typical connector insertion loss', 'Receiver sensitivity table', 'Dispersion penalty formula'];
+    else if (lower.includes('dom') || lower.includes('alarm'))
+      qr = ['Temperature alarm register address', 'TX power low alarm threshold', 'Vcc monitoring range'];
+
+    appendMsg('ai', formatResponse(reply), qr);
+
+  } catch(err) {
+    removeTyping();
+    setStatus('Error');
+    appendMsg('ai', `<span style="color:var(--coral)"><strong>Error:</strong> ${err.message}</span><br><span style="font-size:12px;color:var(--text3)">Check your API key and network connection.</span>`);
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+</script>
+</body>
+</html>
