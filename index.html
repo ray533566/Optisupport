@@ -398,7 +398,7 @@ body { background: var(--bg); font-family: var(--sans); color: var(--text); }
       <div class="info-card">
         <div class="info-card-title">Session</div>
         <div class="info-row"><span class="info-key">Messages</span><span class="info-val" id="msgCount">1</span></div>
-        <div class="info-row"><span class="info-key">Model</span><span class="info-val">Sonnet 4</span></div>
+        <div class="info-row"><span class="info-key">Model</span><span class="info-val">Sonnet 4.5</span></div>
         <div class="info-row"><span class="info-key">Status</span><span class="info-val" id="statusVal">Ready</span></div>
       </div>
       <div class="info-card">
@@ -580,7 +580,7 @@ async function sendMessage() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         system: SYSTEM_PROMPT,
         messages: conversationHistory
